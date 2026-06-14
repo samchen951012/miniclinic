@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>全院數據統計儀表板 - MiniClinic</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin: 0;
+        }
+        .btn-back {
+            background-color: #7f8c8d;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        /* 統計卡片排版 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            text-align: center;
+            border-top: 4px solid #3498db;
+        }
+        .card.patients { border-top-color: #2ecc71; }
+        .card.appointments { border-top-color: #9b59b6; }
+        
+        .card-title {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .card-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        /* 狀態表格排版 */
+        .status-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        h2 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background-color: #f8fafc;
+            color: #64748b;
+            font-weight: 600;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge-booked { background-color: #e3f2fd; color: #0d47a1; }
+        .badge-completed { background-color: #e8f5e9; color: #1b5e20; }
+        .badge-cancelled { background-color: #ffebee; color: #c62828; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🏥 MiniClinic 全院數據統計儀表板</h1>
+        <a href="/dashboard" class="btn-back">返回工作台</a>
+    </div>
+
+    <div class="stats-grid">
+        <div class="card">
+            <div class="card-title">總醫師人數</div>
+            <div class="card-value" id="totalDoctors">-</div>
+        </div>
+        <div class="card patients">
+            <div class="card-title">總病患人數</div>
+            <div class="card-value" id="totalPatients">-</div>
+        </div>
+        <div class="card appointments">
+            <div class="card-title">總預約掛號數</div>
+            <div class="card-value" id="totalAppointments">-</div>
+        </div>
+    </div>
+
+    <div class="status-section">
+        <h2>📊 掛號預約狀態分佈明細</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>掛號預約狀態</th>
+                    <th>小計數量 (筆)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="badge badge-booked">BOOKED (已預約)</span></td>
+                    <td id="statusBooked" style="font-weight: bold; color: #0d47a1;">-</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-completed">COMPLETED (已就診)</span></td>
+                    <td id="statusCompleted" style="font-weight: bold; color: #1b5e20;">-</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-cancelled">CANCELLED (已取消)</span></td>
+                    <td id="statusCancelled" style="font-weight: bold; color: #c62828;">-</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // 網頁載入時，自動呼叫後端 API 填入正確數據與字幕排版
+    document.addEventListener("DOMContentLoaded", function() {
+        fetch('/api/stats')
+            .then(response => response.json())
+            .then(data => {
+                // 渲染總數資料
+                document.getElementById('totalDoctors').textContent = data.totalDoctors;
+                document.getElementById('totalPatients').textContent = data.totalPatients;
+                document.getElementById('totalAppointments').textContent = data.totalAppointments;
+
+                // 渲染巢狀狀態資料
+                if (data.byStatus) {
+                    document.getElementById('statusBooked').textContent = data.byStatus.BOOKED || 0;
+                    document.getElementById('statusCompleted').textContent = data.byStatus.COMPLETED || 0;
+                    document.getElementById('statusCancelled').textContent = data.byStatus.CANCELLED || 0;
+                }
+            })
+            .catch(error => {
+                console.error('無法取得統計數據:', error);
+            });
+    });
+</script>
+
+</body>
+</html>

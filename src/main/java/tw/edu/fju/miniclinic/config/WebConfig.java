@@ -21,11 +21,13 @@ public class WebConfig implements WebMvcConfigurer {
                 "/dashboard/**",
                 "/api/auth/me",
                 "/api/appointments/*/status",
-                "/password" // ✨ 保持原樣，僅在尾端追加保護此路由
+                "/password"
             )
             .excludePathPatterns(
                 "/login",
-                "/logout"
+                "/logout",
+                "/stats",     // ✨ 排除網頁路由攔截，允許公開訪問
+                "/api/stats"  // ✨ 排除統計 API 攔截，允許公開免登入訪問
             );
     }
 }
